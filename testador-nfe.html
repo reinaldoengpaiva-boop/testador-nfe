@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Testador — extractNFe API</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --accent: #00e5a0;
+    --accent-dim: rgba(0,229,160,0.08);
+    --text: #f0f0f0;
+    --muted: #888;
+    --danger: #ff5f5f;
+    --danger-dim: rgba(255,95,95,0.08);
+    --success: #00e5a0;
+    --success-dim: rgba(0,229,160,0.08);
+    --warn: #ffb020;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem;
+  }
+
+  header {
+    width: 100%;
+    max-width: 680px;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  header .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .field-label {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  input[type="password"], input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="password"]:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  .dropzone {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 5px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  .dropzone:hover, .dropzone.over {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .dropzone.loaded {
+    border-color: var(--accent);
+    border-style: solid;
+    background: var(--accent-dim);
+  }
+
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .dropzone .dz-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: var(--muted);
+  }
+
+  .dropzone.loaded .dz-icon { color: var(--accent); }
+
+  .dropzone .dz-text {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .dropzone.loaded .dz-text {
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .send-btn {
+    width: 100%;
+    max-width: 680px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-bottom: 1rem;
+  }
+
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn:active { transform: scale(0.99); }
+  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .result-card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .result-header .left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .result-header .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .status-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .status-ok { background: var(--success-dim); color: var(--success); border: 1px solid rgba(0,229,160,0.2); }
+  .status-err { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,95,95,0.2); }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .result-meta {
+    display: flex;
+    gap: 2rem;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .meta-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .meta-item span {
+    color: var(--text);
+    margin-left: 4px;
+  }
+
+  pre {
+    padding: 1.25rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #c8fce4;
+    overflow: auto;
+    max-height: 500px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #0c1a14;
+  }
+
+  pre.error-pre { color: #ffb0b0; background: #1a0c0c; }
+
+  .status-bar {
+    width: 100%;
+    max-width: 680px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 0;
+    color: var(--muted);
+    min-height: 28px;
+  }
+
+  .status-bar.ok { color: var(--success); }
+  .status-bar.err { color: var(--danger); }
+  .status-bar.loading { color: var(--warn); }
+
+  footer {
+    margin-top: 3rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #3a3a3a;
+  }
+
+  .endpoint-display {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    word-break: break-all;
+  }
+
+  .method-pill {
+    display: inline-block;
+    background: rgba(0,229,160,0.12);
+    color: var(--accent);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag">API Tester</div>
+  <h1>extractNFe</h1>
+  <p>Envie um PDF de NF-e e visualize a resposta da API</p>
+  <div class="endpoint-display">
+    <span class="method-pill">POST</span>
+    https://artificial-intelligence-api-118077981230.us-west1.run.app/api/extractNFe
+  </div>
+</header>
+
+<div class="card">
+  <label class="field-label" for="apiKey">x-api-key</label>
+  <input type="password" id="apiKey" placeholder="Insira sua chave de API..." />
+  <div style="margin-top:12px; display:flex; align-items:center; gap:8px;">
+    <input type="checkbox" id="useProxy" checked style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;" />
+    <label for="useProxy" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);cursor:pointer;">
+      Usar proxy CORS <span style="color:var(--accent);">(corsproxy.io)</span> — necessário ao abrir como arquivo local
+    </label>
+  </div>
+</div>
+
+<div class="card">
+  <label class="field-label">Arquivo PDF</label>
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" accept="application/pdf" />
+    <div class="dz-icon" id="dzIcon">📄</div>
+    <div class="dz-text" id="dzText">Arraste o PDF aqui ou clique para selecionar</div>
+  </div>
+</div>
+
+<button class="send-btn" id="sendBtn" onclick="sendRequest()">→ Enviar requisição</button>
+
+<div class="status-bar" id="statusBar"></div>
+
+<div class="result-card" id="resultCard">
+  <div class="result-header">
+    <div class="left">
+      <span class="label">Resposta</span>
+      <span class="status-badge" id="statusBadge"></span>
+    </div>
+    <button class="copy-btn" onclick="copyResult()">copiar</button>
+  </div>
+  <div class="result-meta" id="resultMeta" style="display:none;">
+    <div class="meta-item">tempo: <span id="metaTime">—</span></div>
+    <div class="meta-item">tamanho: <span id="metaSize">—</span></div>
+  </div>
+  <pre id="resultPre"></pre>
+</div>
+
+<footer>proxy: corsproxy.io — desative se rodar em servidor próprio com CORS configurado</footer>
+
+<script>
+  let base64Data = null;
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+
+  function handleFile(file) {
+    if (!file || file.type !== 'application/pdf') {
+      setStatus('Selecione um arquivo PDF válido.', 'err');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      base64Data = e.target.result.split(',')[1];
+      dropzone.classList.add('loaded');
+      document.getElementById('dzIcon').textContent = '✓';
+      document.getElementById('dzText').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+      setStatus('PDF carregado. Pronto para enviar.', 'ok');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('over');
+    handleFile(e.dataTransfer.files[0]);
+  });
+
+  function setStatus(msg, type) {
+    const el = document.getElementById('statusBar');
+    el.textContent = msg;
+    el.className = 'status-bar ' + (type || '');
+  }
+
+  async function sendRequest() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) { setStatus('Insira a chave de API.', 'err'); return; }
+    if (!base64Data) { setStatus('Selecione um arquivo PDF.', 'err'); return; }
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Enviando...';
+    setStatus('Aguardando resposta da API...', 'loading');
+    document.getElementById('resultCard').style.display = 'none';
+
+    const t0 = Date.now();
+    try {
+      const TARGET = 'https://artificial-intelligence-api-118077981230.us-west1.run.app/api/extractNFe';
+      const proxyUrl = document.getElementById('useProxy').checked
+        ? 'https://corsproxy.io/?' + encodeURIComponent(TARGET)
+        : TARGET;
+
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+        body: JSON.stringify({ base64File: base64Data })
+      });
+      const elapsed = Date.now() - t0;
+      const text = await res.text();
+
+      let pretty;
+      try { pretty = JSON.stringify(JSON.parse(text), null, 2); }
+      catch { pretty = text; }
+
+      const badge = document.getElementById('statusBadge');
+      const pre = document.getElementById('resultPre');
+
+      if (res.ok) {
+        badge.textContent = res.status + ' OK';
+        badge.className = 'status-badge status-ok';
+        pre.className = '';
+        setStatus('Requisição concluída com sucesso em ' + elapsed + 'ms.', 'ok');
+      } else {
+        badge.textContent = res.status + ' ' + res.statusText;
+        badge.className = 'status-badge status-err';
+        pre.className = 'error-pre';
+        setStatus('A API retornou um erro HTTP ' + res.status + '.', 'err');
+      }
+
+      pre.textContent = pretty;
+
+      document.getElementById('metaTime').textContent = elapsed + 'ms';
+      document.getElementById('metaSize').textContent = (new Blob([text]).size / 1024).toFixed(2) + ' KB';
+      document.getElementById('resultMeta').style.display = 'flex';
+      document.getElementById('resultCard').style.display = 'block';
+
+    } catch (err) {
+      setStatus('Falha na requisição: ' + err.message, 'err');
+
+      const badge = document.getElementById('statusBadge');
+      badge.textContent = 'ERRO';
+      badge.className = 'status-badge status-err';
+
+      const pre = document.getElementById('resultPre');
+      pre.className = 'error-pre';
+      pre.textContent = err.toString();
+
+      document.getElementById('resultMeta').style.display = 'none';
+      document.getElementById('resultCard').style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '→ Enviar requisição';
+    }
+  }
+
+  function copyResult() {
+    const text = document.getElementById('resultPre').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'copiado!';
+      setTimeout(() => btn.textContent = 'copiar', 1500);
+    });
+  }
+</script>
+</body>
+</html>
